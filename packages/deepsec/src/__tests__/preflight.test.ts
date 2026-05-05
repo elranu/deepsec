@@ -19,10 +19,14 @@ describe("assertAgentCredential", () => {
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       CLAUDE_HOME: process.env.CLAUDE_HOME,
       CODEX_HOME: process.env.CODEX_HOME,
+      GH_COPILOT_TOKEN: process.env.GH_COPILOT_TOKEN,
+      GITHUB_TOKEN: process.env.GITHUB_TOKEN,
       PATH: process.env.PATH,
     };
     delete process.env.ANTHROPIC_AUTH_TOKEN;
     delete process.env.OPENAI_API_KEY;
+    delete process.env.GH_COPILOT_TOKEN;
+    delete process.env.GITHUB_TOKEN;
     // Point CLAUDE_HOME / CODEX_HOME and PATH at empty tmp dirs so the
     // suite is hermetic — the dev running tests may have a real
     // ~/.codex/auth.json or `claude` on $PATH, which would cause
@@ -103,6 +107,34 @@ describe("assertAgentCredential", () => {
     // require fake ANTHROPIC_AUTH_TOKEN env vars.
     expect(() => assertAgentCredential("stub")).not.toThrow();
     expect(() => assertAgentCredential("anything-else")).not.toThrow();
+  });
+
+  it("passes for acp when GH_COPILOT_TOKEN is set", () => {
+    process.env.GH_COPILOT_TOKEN = "github_pat_test";
+    expect(() => assertAgentCredential("acp")).not.toThrow();
+    delete process.env.GH_COPILOT_TOKEN;
+  });
+
+  it("passes for acp when GITHUB_TOKEN is set", () => {
+    process.env.GITHUB_TOKEN = "ghp_test";
+    expect(() => assertAgentCredential("acp")).not.toThrow();
+    delete process.env.GITHUB_TOKEN;
+  });
+
+  it("passes for acp when gh CLI is on PATH", () => {
+    writeFileSync(join(emptyPathDir, "gh"), "#!/bin/sh\n", { mode: 0o755 });
+    expect(() => assertAgentCredential("acp")).not.toThrow();
+  });
+
+  it("throws an actionable message for acp when no token and no gh CLI", () => {
+    expect(() => assertAgentCredential("acp")).toThrow(/GH_COPILOT_TOKEN/);
+    expect(() => assertAgentCredential("acp")).toThrow(/GITHUB_TOKEN/);
+    expect(() => assertAgentCredential("acp")).toThrow(/gh auth login/);
+  });
+
+  it("ignores gh CLI subscription auth for acp in sandbox mode", () => {
+    writeFileSync(join(emptyPathDir, "gh"), "#!/bin/sh\n", { mode: 0o755 });
+    expect(() => assertAgentCredential("acp", { inSandbox: true })).toThrow(/GH_COPILOT_TOKEN/);
   });
 });
 

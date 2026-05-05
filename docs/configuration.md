@@ -27,7 +27,7 @@ see [`samples/webapp/deepsec.config.ts`](../samples/webapp/deepsec.config.ts).
 | `projects` | `ProjectDeclaration[]` | The codebases deepsec knows about. |
 | `plugins` | `DeepsecPlugin[]` | Loaded in order; later plugins override single-slot capabilities. |
 | `matchers` | `{ only?: string[]; exclude?: string[] }` | Filter the matcher set used by `scan`. |
-| `defaultAgent` | `string` | Default `--agent` value (`claude-agent-sdk` or `codex`). See [models.md](models.md). |
+| `defaultAgent` | `string` | Default `--agent` value (`claude-agent-sdk`, `codex`, or `acp`). See [models.md](models.md). |
 | `dataDir` | `string` | Override the `data/` directory. Defaults to `./data`. |
 
 ## ProjectDeclaration
@@ -99,22 +99,42 @@ from the process environment.
 
 ### Required
 
-You need either the one-line shortcut **or** an explicit token for the
-backend you're using.
+You need credentials for whichever backend you're using.
 
-| Var | Used by | Purpose |
-|---|---|---|
-| `AI_GATEWAY_API_KEY` | all AI commands | Shortcut. Expands at CLI startup into `ANTHROPIC_AUTH_TOKEN` / `OPENAI_API_KEY` / `ANTHROPIC_BASE_URL` / `OPENAI_BASE_URL` — one key covers both Claude and Codex through Vercel AI Gateway. Any of those four vars set explicitly takes precedence. |
-| `ANTHROPIC_AUTH_TOKEN` | `process`, `revalidate`, `triage` (Claude backend) | API token for the Claude Agent SDK. AI Gateway-issued or Anthropic-issued. Set this if you don't use `AI_GATEWAY_API_KEY`. |
-| `ANTHROPIC_BASE_URL` | same | Default (when `AI_GATEWAY_API_KEY` is set): `https://ai-gateway.vercel.sh`. Set to `https://api.anthropic.com` for direct Anthropic. |
+**Claude Agent SDK (`--agent claude-agent-sdk`, default)**
+
+| Var | Purpose |
+|---|---|
+| `AI_GATEWAY_API_KEY` | Shortcut. Expands at CLI startup into `ANTHROPIC_AUTH_TOKEN` / `OPENAI_API_KEY` / `ANTHROPIC_BASE_URL` / `OPENAI_BASE_URL` — one key covers both Claude and Codex through Vercel AI Gateway. Any of those four vars set explicitly takes precedence. |
+| `ANTHROPIC_AUTH_TOKEN` | API token for the Claude Agent SDK. AI Gateway-issued or Anthropic-issued. Set this if you don't use `AI_GATEWAY_API_KEY`. |
+| `ANTHROPIC_BASE_URL` | Default (when `AI_GATEWAY_API_KEY` is set): `https://ai-gateway.vercel.sh`. Set to `https://api.anthropic.com` for direct Anthropic. |
+
+**Codex (`--agent codex`)**
+
+| Var | Purpose |
+|---|---|
+| `OPENAI_API_KEY` | Codex SDK token. Unset is fine if `AI_GATEWAY_API_KEY` is set, or if Codex routes through AI Gateway with the Anthropic token. |
+| `OPENAI_BASE_URL` | Default (when `AI_GATEWAY_API_KEY` is set): `https://ai-gateway.vercel.sh/v1`. |
+
+**GitHub Copilot via ACP (`--agent acp`)**
+
+| Var | Purpose |
+|---|---|
+| `GH_COPILOT_TOKEN` | GitHub token with `copilot` scope (highest priority). Create a fine-grained PAT at https://github.com/settings/personal-access-tokens. |
+| `GITHUB_TOKEN` | Standard GitHub token. Used when `GH_COPILOT_TOKEN` is unset. Also works in GitHub Actions with `${{ secrets.GITHUB_TOKEN }}` when Copilot is enabled. |
+
+When neither `GH_COPILOT_TOKEN` nor `GITHUB_TOKEN` is set, deepsec falls
+back to `gh auth token` (GitHub CLI). This covers the common local-dev
+case where you've already run `gh auth login && gh auth refresh --scopes copilot`.
+
+See [docs/github-copilot-acp.md](github-copilot-acp.md) for the full
+GitHub Copilot setup guide.
 
 ### Optional
 
 | Var | Used by | Purpose |
 |---|---|---|
-| `OPENAI_API_KEY` | `--agent codex` | Codex SDK token. Unset is fine if `AI_GATEWAY_API_KEY` is set, or if Codex routes through AI Gateway with the Anthropic token. |
-| `OPENAI_BASE_URL` | `--agent codex` | Default (when `AI_GATEWAY_API_KEY` is set): `https://ai-gateway.vercel.sh/v1`. |
-| `DEEPSEC_AGENT_DEBUG` | both backends | Set to `1` to enable verbose agent logging. |
+| `DEEPSEC_AGENT_DEBUG` | all backends | Set to `1` to enable verbose agent logging. |
 | `DEEPSEC_DATA_ROOT` | core | Override the data directory location. Equivalent to `dataDir` in config. |
 
 ### Plugin-specific

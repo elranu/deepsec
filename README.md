@@ -55,6 +55,7 @@ If you feel like the `deepsec` should look at more parts of the code, give it [t
 - [docs/configuration.md](docs/configuration.md) — `deepsec.config.ts` reference
 - [docs/plugins.md](docs/plugins.md) — plugin authoring
 - [docs/models.md](docs/models.md) — model selection, defaults, refusals, future models
+- [docs/github-copilot-acp.md](docs/github-copilot-acp.md) — **GitHub Copilot Pro+ via ACP** (auth steps, requirements, model list)
 - [docs/vercel-setup.md](docs/vercel-setup.md) — AI Gateway + Vercel Sandbox keys / tokens
 - [docs/architecture.md](docs/architecture.md) — pipeline internals
 - [docs/data-layout.md](docs/data-layout.md) — `data/` schemas (FileRecord, RunMeta, …)
@@ -64,21 +65,44 @@ If you feel like the `deepsec` should look at more parts of the code, give it [t
 
 ## AI provider
 
-When running locally, `deepsec` attempts to use your existing subscriptions
-when invoking claude or codex.
+deepsec supports three interchangeable AI backends:
 
-For scaled usage on large code bases we recommend using Vercel AI Gateway or
-provider API keys. The AI Gateway has default quotas suitable for highly 
+### GitHub Copilot Pro+ via ACP (no extra API key needed)
+
+If you have a **GitHub Copilot Pro+** subscription, use the `--agent acp`
+flag to run deepsec with the models in your plan (GPT-4o, Claude 3.5 Sonnet,
+Gemini 1.5 Pro, o3-mini, and more):
+
+```bash
+# Uses your existing Copilot Pro+ subscription
+pnpm deepsec process --project-id my-app --agent acp
+```
+
+Authentication uses the GitHub CLI session automatically when you're logged in:
+
+```bash
+gh auth login
+gh auth refresh --scopes copilot    # ensure the copilot scope is present
+```
+
+Or set `GH_COPILOT_TOKEN` / `GITHUB_TOKEN` in `.env.local` for CI/CD.
+See [docs/github-copilot-acp.md](docs/github-copilot-acp.md) for the full
+setup guide.
+
+### Claude / Codex via Vercel AI Gateway
+
+For scaled usage on large codebases we recommend using Vercel AI Gateway or
+provider API keys. The AI Gateway has default quotas suitable for highly
 concurrent research.
 
 ```
 AI_GATEWAY_API_KEY=vck_...
 ```
 
-That single key covers both Claude and Codex. See 
-[docs/vercel-setup.md](docs/vercel-setup.md) for getting a key and for 
-the Vercel Sandbox setup. To bypass the gateway, set `ANTHROPIC_AUTH_TOKEN` 
-+ `ANTHROPIC_BASE_URL` (or the OpenAI pair) explicitly. Explicit values 
+That single key covers both Claude and Codex. See
+[docs/vercel-setup.md](docs/vercel-setup.md) for getting a key and for
+the Vercel Sandbox setup. To bypass the gateway, set `ANTHROPIC_AUTH_TOKEN`
++ `ANTHROPIC_BASE_URL` (or the OpenAI pair) explicitly. Explicit values
 always win over the `AI_GATEWAY_API_KEY` expansion.
 
 ## Distributed execution (optional)

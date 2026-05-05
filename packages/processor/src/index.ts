@@ -14,6 +14,7 @@ import {
   writeRunMeta,
 } from "@deepsec/core";
 import { noiseScore } from "@deepsec/scanner";
+import { AcpAgentPlugin } from "./agents/acp.js";
 import { ClaudeAgentSdkPlugin } from "./agents/claude-agent-sdk.js";
 import { CodexAgentSdkPlugin } from "./agents/codex-sdk.js";
 import { AgentRegistry } from "./agents/registry.js";
@@ -26,6 +27,7 @@ import type {
 import { batchCandidates } from "./batch.js";
 import { enrichFileRecord } from "./enrich.js";
 
+export { AcpAgentPlugin } from "./agents/acp.js";
 export { ClaudeAgentSdkPlugin } from "./agents/claude-agent-sdk.js";
 export { CodexAgentSdkPlugin } from "./agents/codex-sdk.js";
 export { AgentRegistry } from "./agents/registry.js";
@@ -152,6 +154,7 @@ export function createDefaultAgentRegistry(): AgentRegistry {
   const registry = new AgentRegistry();
   registry.register(new ClaudeAgentSdkPlugin());
   registry.register(new CodexAgentSdkPlugin());
+  registry.register(new AcpAgentPlugin());
   // Plugins can contribute additional backends via `agents: []` in their
   // DeepsecPlugin export. The shape is validated by AgentRegistry at use.
   for (const a of getRegistry().agents as AgentPlugin[]) {

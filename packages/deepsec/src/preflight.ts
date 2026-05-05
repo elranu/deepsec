@@ -103,11 +103,24 @@ function hasLocalCodexAgent(): boolean {
   return existsSync(join(codexHome, "auth.json"));
 }
 
+/**
+ * "Likely to just work" signal for the GitHub CLI / Copilot subscription
+ * path. This only verifies that `gh` is available on PATH — whether the
+ * user is actually logged in and has the `copilot` scope is verified at
+ * first call when `resolveGitHubToken` runs `gh auth token`.
+ *
+ * Only consulted in non-sandbox runs. In sandbox mode the worker has no
+ * `gh` binary, so an explicit token env var is required.
+ */
+function hasLocalGhCli(): boolean {
+  return whichSync("gh");
+}
+
 // Built-in backends we know how to credential-check. Agents registered
 // via plugins (deepsec.config.ts → plugins: [{ agents: [...] }]) handle
 // their own credential resolution, so we skip the check for anything
 // other than these.
-const KNOWN_BACKENDS = new Set<string>(["claude-agent-sdk", "codex"]);
+const KNOWN_BACKENDS = new Set<string>(["claude-agent-sdk", "codex", "acp"]);
 
 /**
  * Verify the orchestrator has an AI credential the chosen agent can use.
@@ -143,6 +156,31 @@ export function assertAgentCredential(
         `\n` +
         `  Add to .env.local:    AI_GATEWAY_API_KEY=vck_…   (or OPENAI_API_KEY=…)\n` +
         `  Setup: ${SETUP_DOC_URL}`,
+    );
+  }
+
+  if (agentType === "acp") {
+    // ACP uses GitHub Copilot. Accept either an explicit Copilot token, a
+    // standard GITHUB_TOKEN, or a locally-installed `gh` CLI that can
+    // produce a token via `gh auth token`. In sandbox mode, the `gh` CLI
+    // is not available, so an explicit token is mandatory.
+    const ghCopilotToken = process.env.GH_COPILOT_TOKEN;
+    const githubToken = process.env.GITHUB_TOKEN;
+    if (ghCopilotToken || githubToken) return;
+    if (!options.inSandbox && hasLocalGhCli()) return;
+    throw new Error(
+      `Missing GitHub Copilot credentials for --agent acp.\n` +
+        `\n` +
+        `  Option 1 — GitHub CLI (recommended for local development):\n` +
+        `    Install: https://cli.github.com/\n` +
+        `    Then:    gh auth login\n` +
+        `             gh auth refresh --scopes copilot\n` +
+        `\n` +
+        `  Option 2 — Add to .env.local:\n` +
+        `    GH_COPILOT_TOKEN=github_pat_…   (PAT with copilot scope)\n` +
+        `    or GITHUB_TOKEN=ghp_…\n` +
+        `\n` +
+        `  Full setup: see docs/github-copilot-acp.md`,
     );
   }
 

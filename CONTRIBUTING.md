@@ -43,6 +43,43 @@ pnpm test:bundle        # bundle e2e: runs the produced binary as a subprocess
 ```
 
 All of build, test, lint, and knip must pass before a PR is mergeable.
+
+### Testing your local build against another repo
+
+`npx deepsec init` always pulls from the published npm version. To use your
+local branch in another repo you have two options:
+
+**Option A — via `tsx` (no build needed)**
+
+Run the CLI directly from source against any target directory using the root
+monorepo script:
+
+```bash
+# From the root of this repo:
+pnpm deepsec init --workspace /path/to/other-repo/.deepsec --target-root /path/to/other-repo
+pnpm deepsec scan --workspace /path/to/other-repo/.deepsec
+```
+
+This uses `tsx packages/deepsec/src/cli.ts` and picks up every in-flight
+source change without a build step.
+
+**Option B — build + link (closer to what users run)**
+
+```bash
+# 1. Build the bundle
+pnpm bundle
+
+# 2. Link the package globally
+cd packages/deepsec
+npm link
+
+# 3. In the other repo, use the linked binary instead of npx:
+cd /path/to/other-repo
+deepsec init
+
+# 4. Unlink when done
+npm unlink -g deepsec
+```
 PRs that touch the publish surface (anything imported via `deepsec/config`)
 must also pass `pnpm test:bundle`.
 

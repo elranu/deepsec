@@ -1,17 +1,22 @@
 # Models
 
-deepsec talks to LLMs through two interchangeable backends:
+deepsec talks to LLMs through three interchangeable backends:
 
 | Backend                     | Default model         | Used by                      |
 |-----------------------------|-----------------------|------------------------------|
 | `claude-agent-sdk` (default) | `claude-opus-4-7`     | `process`, `revalidate`      |
 | `codex`                     | `gpt-5.5`             | `process`, `revalidate`      |
+| `acp` (GitHub Copilot)      | `gpt-4o`              | `process`, `revalidate`      |
 | `claude-agent-sdk` (triage)  | `claude-sonnet-4-6`   | `triage` (Claude-only)       |
 
-Both backends route through [Vercel AI Gateway](https://vercel.com/ai-gateway)
+`claude-agent-sdk` and `codex` route through [Vercel AI Gateway](https://vercel.com/ai-gateway)
 by default, so a single token covers Claude **and** Codex. To use
 Anthropic or OpenAI directly, point `ANTHROPIC_BASE_URL` /
 `OPENAI_BASE_URL` at the provider.
+
+`acp` routes through the **GitHub Copilot API** and uses your Copilot Pro+
+subscription. See [docs/github-copilot-acp.md](github-copilot-acp.md) for
+authentication steps and requirements.
 
 ## CLI selection
 
@@ -27,6 +32,12 @@ pnpm deepsec process --project-id my-app --agent codex
 
 # Codex backend, specific model:
 pnpm deepsec process --project-id my-app --agent codex --model gpt-5.4
+
+# GitHub Copilot (ACP backend), default model:
+pnpm deepsec process --project-id my-app --agent acp
+
+# GitHub Copilot with a specific model:
+pnpm deepsec process --project-id my-app --agent acp --model claude-3.5-sonnet
 
 # Triage uses Claude; pass a cheaper model if you want:
 pnpm deepsec triage --project-id my-app --model claude-haiku-4-5
@@ -57,6 +68,16 @@ strict read-only sandbox. `gpt-5.5` is the right balance of reasoning
 and cost for that loop. `gpt-5.5-pro` is the most careful Codex
 option at significantly higher cost; `gpt-5.4` and below are fine for
 follow-up reinvestigation passes.
+
+### `gpt-4o` for the ACP (GitHub Copilot) backend
+
+The ACP backend sends file contents inline to the GitHub Copilot API —
+no tool loop, a single API call per batch. `gpt-4o` is a solid choice
+that is available on all Copilot Pro+ plans and handles code reasoning
+well. For deeper analysis, `claude-3.5-sonnet` or `o3-mini` (both
+available on Pro+) tend to catch more subtle issues at the cost of
+higher latency. Use `gpt-4o-mini` when you want a fast, cheap first
+pass.
 
 ### `claude-sonnet-4-6` for `triage`
 

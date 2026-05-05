@@ -1,6 +1,11 @@
 /**
- * ACP (Agent Connect Protocol) agent plugin — integrates GitHub Copilot Pro+
- * models into deepsec via the GitHub Copilot chat completions API.
+ * ACP agent plugin — provides GitHub Copilot Pro+ model access in deepsec.
+ *
+ * The agent type is named "acp" (Agent Connect Protocol) to align with the
+ * broader GitHub Copilot extensibility ecosystem. Internally it uses the
+ * GitHub Copilot chat completions API (`api.githubcopilot.com`), which
+ * exposes GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, o3-mini, and other
+ * models available in your Copilot Pro+ subscription.
  *
  * Unlike the Claude or Codex backends (which get a tool loop on the local
  * filesystem), this agent reads candidate files itself and bundles their
@@ -243,6 +248,8 @@ interface CopilotChatResponse {
  *   1. GH_COPILOT_TOKEN — a token with the `copilot` scope set explicitly
  *   2. GITHUB_TOKEN — standard GitHub token (CI / PAT / OAuth)
  *   3. `gh auth token` — reuse the interactive session from `gh auth login`
+ *
+ * Exported so tests can validate the resolution logic directly.
  */
 export function resolveGitHubToken(): string {
   const explicit = process.env.GH_COPILOT_TOKEN ?? process.env.GITHUB_TOKEN;

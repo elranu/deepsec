@@ -105,8 +105,9 @@ function hasLocalCodexAgent(): boolean {
 
 /**
  * "Likely to just work" signal for the GitHub CLI / Copilot subscription
- * path. When `gh` is on PATH and the user is logged in, `resolveGitHubToken`
- * in acp.ts can call `gh auth token` to pick up the session token.
+ * path. This only verifies that `gh` is available on PATH — whether the
+ * user is actually logged in and has the `copilot` scope is verified at
+ * first call when `resolveGitHubToken` runs `gh auth token`.
  *
  * Only consulted in non-sandbox runs. In sandbox mode the worker has no
  * `gh` binary, so an explicit token env var is required.

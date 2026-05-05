@@ -41,8 +41,9 @@ After step 3, running `gh auth token` will return an OAuth token that deepsec
 can use. No `.env.local` changes are needed.
 
 **Caveat:** The `copilot` scope is only needed to call the Copilot API
-directly. If your token already has the scope (e.g., you installed Copilot
-before), step 3 may be a no-op.
+directly. If your GitHub CLI session already includes that scope (e.g.,
+you previously granted it via `gh auth refresh --scopes copilot`), step 3
+may be a no-op.
 
 ---
 
